@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Booked Students & Evaluations - Examiner Portal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-people text-primary me-2"></i>Booked Candidates for Evaluation</h3>
+        <p class="text-muted mb-0">View students booked into your examination slots and conduct rubric-based grading</p>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+    <div class="card-body p-3">
+        <div class="row g-3 align-items-center justify-content-between">
+            <div class="col-md-auto">
+                <ul class="nav nav-pills">
+                    <li class="nav-item">
+                        <a class="nav-link {% if status_filter == 'all' %}active{% endif %}" href="{{ url_for('examiner.bookings', status='all', q=search_query) }}">All Candidates ({{ bookings | length }})</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if status_filter == 'Booked' %}active{% endif %}" href="{{ url_for('examiner.bookings', status='Booked', q=search_query) }}">Pending Evaluation</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if status_filter == 'Completed' %}active{% endif %}" href="{{ url_for('examiner.bookings', status='Completed', q=search_query) }}">Evaluated / Completed</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="col-md-5">
+                <form method="GET" action="{{ url_for('examiner.bookings') }}" class="d-flex gap-2">
+                    <input type="hidden" name="status" value="{{ status_filter }}">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control border-start-0" name="q" value="{{ search_query or '' }}" placeholder="Search by student name or roll ID..." data-table-search="examinerBookingsTable">
+                    </div>
+                    <button type="submit" class="btn btn-dark btn-sm px-3">Search</button>
+                    {% if search_query %}
+                        <a href="{{ url_for('examiner.bookings', status=status_filter) }}" class="btn btn-outline-secondary btn-sm">Reset</a>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bookings List Table -->
+<div class="card border-0 shadow-sm rounded-4 bg-white">
+    <div class="card-body p-3">
+        <div class="table-responsive">
+            <table class="table table-hover table-custom mb-0" id="examinerBookingsTable">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Student Candidate</th>
+                        <th>Examination</th>
+                        <th>Slot Time</th>
+                        <th>Status</th>
+                        <th>Marks Awarded</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if bookings %}
+                        {% for b in bookings %}
+                        <tr>
+                            <td><span class="fw-bold">#{{ b.id }}</span></td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ b.student.name }}</div>
+                                <small class="text-muted"><i class="bi bi-card-text me-1"></i>{{ b.student.student_id }} &bull; {{ b.student.department }}</small>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">{{ b.examination.title }}</div>
+                                <small class="text-muted">{{ b.examination.course.code }} (Total: {{ b.examination.total_marks }} pts)</small>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">{{ b.slot.slot_date.strftime('%d-%b-%Y') }}</div>
+                                <small class="text-muted">{{ b.slot.start_time.strftime('%I:%M %p') }} - {{ b.slot.end_time.strftime('%I:%M %p') }}</small>
+                            </td>
+                            <td>
+                                {% if b.status == 'Completed' %}
+                                    <span class="badge badge-soft-success"><i class="bi bi-check-circle me-1"></i>Evaluated</span>
+                                {% elif b.status == 'Booked' or b.status == 'Rescheduled' %}
+                                    <span class="badge badge-soft-warning"><i class="bi bi-clock me-1"></i>Awaiting Eval</span>
+                                {% else %}
+                                    <span class="badge badge-soft-secondary">{{ b.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if b.marks_obtained is not none %}
+                                    <span class="fw-bold text-success fs-6">{{ b.marks_obtained }} / {{ b.examination.total_marks }}</span>
+                                    <small class="text-muted">({{ b.percentage }}%)</small>
+                                {% else %}
+                                    <span class="text-muted small">Not graded</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if b.status != 'Cancelled' %}
+                                    <a href="{{ url_for('examiner.evaluate', booking_id=b.id) }}" class="btn btn-sm {% if b.status == 'Completed' %}btn-outline-secondary{% else %}btn-primary{% endif %} px-3 fw-semibold">
+                                        <i class="bi bi-pen me-1"></i> {% if b.status == 'Completed' %}Re-Evaluate{% else %}Evaluate{% endif %}
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">
+                                <i class="bi bi-people display-6 d-block mb-2"></i>
+                                No booked candidates found for your examination slots.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

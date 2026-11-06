@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} Course - Examination Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 bg-white">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                <div class="d-flex align-items-center">
+                    <a href="{{ url_for('admin.courses') }}" class="btn btn-outline-secondary btn-sm me-3">
+                        <i class="bi bi-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h4 class="fw-bold mb-0 text-dark">{{ action }} Course</h4>
+                        <small class="text-muted">Define academic course curriculum details</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" class="needs-validation" novalidate>
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label for="code" class="form-label fw-semibold">Course Code <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control text-uppercase" id="code" name="code" value="{{ course.code if course else '' }}" placeholder="e.g. CS2001" required>
+                            <div class="invalid-feedback">Course code is required.</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label for="credits" class="form-label fw-semibold">Credits</label>
+                            <input type="number" class="form-control" id="credits" name="credits" value="{{ course.credits if course else 4 }}" min="1" max="12">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label fw-semibold">Course Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ course.name if course else '' }}" placeholder="e.g. Modern Application Development I" required>
+                        <div class="invalid-feedback">Course name is required.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="department" class="form-label fw-semibold">Department <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="department" name="department" value="{{ course.department if course else '' }}" placeholder="e.g. Computer Science and Engineering" required>
+                        <div class="invalid-feedback">Department is required.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="description" class="form-label fw-semibold">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" placeholder="Brief outline of syllabus or course objectives">{{ course.description if course else '' }}</textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('admin.courses') }}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                            <i class="bi bi-check-circle me-1"></i> Save Course
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

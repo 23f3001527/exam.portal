@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} Slot - Examiner Portal{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 bg-white">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                <div class="d-flex align-items-center">
+                    <a href="{{ url_for('examiner.slots') }}" class="btn btn-outline-secondary btn-sm me-3">
+                        <i class="bi bi-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h4 class="fw-bold mb-0 text-dark">{{ action }} Examination Slot</h4>
+                        <small class="text-muted">Set date, evaluation window time, and maximum student capacity</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" class="needs-validation" novalidate>
+                    {% if action == 'Create' %}
+                        <div class="mb-3">
+                            <label for="exam_id" class="form-label fw-semibold">Examination (Open Window) <span class="text-danger">*</span></label>
+                            <select class="form-select" id="exam_id" name="exam_id" required>
+                                <option value="">Select an examination...</option>
+                                {% for ex in exams %}
+                                    <option value="{{ ex.id }}">
+                                        {{ ex.course.code }}: {{ ex.title }} (Scheduled: {{ ex.exam_date.strftime('%d-%b-%Y') }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">Please select an active examination.</div>
+                            <div class="form-text small">Only examinations with active slot creation permissions appear here.</div>
+                        </div>
+                    {% else %}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Examination</label>
+                            <input type="text" class="form-control" value="{{ slot.examination.course.code }}: {{ slot.examination.title }}" disabled>
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label for="slot_date" class="form-label fw-semibold">Slot Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="slot_date" name="slot_date" value="{{ slot.slot_date.strftime('%Y-%m-%d') if slot else '' }}" required>
+                        <div class="invalid-feedback">Slot date is required.</div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label for="start_time" class="form-label fw-semibold">Start Time <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control" id="start_time" name="start_time" value="{{ slot.start_time.strftime('%H:%M') if slot else '10:00' }}" required>
+                            <div class="invalid-feedback">Start time is required.</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label for="end_time" class="form-label fw-semibold">End Time <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control" id="end_time" name="end_time" value="{{ slot.end_time.strftime('%H:%M') if slot else '10:30' }}" required>
+                            <div class="invalid-feedback">End time is required.</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="capacity" class="form-label fw-semibold">Slot Capacity (Number of Students) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="capacity" name="capacity" value="{{ slot.capacity if slot else 1 }}" min="1" max="50" required>
+                        <div class="invalid-feedback">Capacity must be at least 1.</div>
+                        <div class="form-text small">The system will automatically prevent overbooking and close the slot when full.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="location_or_link" class="form-label fw-semibold">Venue / Meeting URL</label>
+                        <input type="text" class="form-control" id="location_or_link" name="location_or_link" value="{{ slot.location_or_link if slot else '' }}" placeholder="e.g. Lab 204 or https://meet.google.com/xyz-abc">
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('examiner.slots') }}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                            <i class="bi bi-check-circle me-1"></i> Save Slot
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

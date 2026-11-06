@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} Examination - Examination Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-md-9 col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4 bg-white">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                <div class="d-flex align-items-center">
+                    <a href="{{ url_for('admin.examinations') }}" class="btn btn-outline-secondary btn-sm me-3">
+                        <i class="bi bi-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h4 class="fw-bold mb-0 text-dark">{{ action }} Examination</h4>
+                        <small class="text-muted">Configure examination rules, timing, examiner assignment, and booking controls</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label for="course_id" class="form-label fw-semibold">Associated Course <span class="text-danger">*</span></label>
+                        <select class="form-select" id="course_id" name="course_id" required>
+                            <option value="">Select a course...</option>
+                            {% for c in courses %}
+                                <option value="{{ c.id }}" {% if exam and exam.course_id == c.id %}selected{% endif %}>
+                                    {{ c.code }} - {{ c.name }} ({{ c.department }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">Please select an academic course.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="title" class="form-label fw-semibold">Examination Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" name="title" value="{{ exam.title if exam else '' }}" placeholder="e.g. End-Term Project Viva Voce" required>
+                        <div class="invalid-feedback">Examination title is required.</div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-4">
+                            <label for="exam_type" class="form-label fw-semibold">Assessment Type</label>
+                            <select class="form-select" id="exam_type" name="exam_type">
+                                <option value="Viva" {% if exam and exam.exam_type == 'Viva' %}selected{% endif %}>Viva Voce</option>
+                                <option value="Practical" {% if exam and exam.exam_type == 'Practical' %}selected{% endif %}>Practical / Lab</option>
+                                <option value="Project Presentation" {% if exam and exam.exam_type == 'Project Presentation' %}selected{% endif %}>Project Presentation</option>
+                                <option value="Theory" {% if exam and exam.exam_type == 'Theory' %}selected{% endif %}>Theory Exam</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-4">
+                            <label for="total_marks" class="form-label fw-semibold">Total Marks <span class="text-danger">*</span></label>
+                            <input type="number" step="0.5" class="form-control" id="total_marks" name="total_marks" value="{{ exam.total_marks if exam else 100.0 }}" required>
+                            <div class="invalid-feedback">Total marks are required.</div>
+                        </div>
+                        <div class="col-sm-4">
+                            <label for="duration_minutes" class="form-label fw-semibold">Duration (Mins)</label>
+                            <input type="number" class="form-control" id="duration_minutes" name="duration_minutes" value="{{ exam.duration_minutes if exam else 30 }}" min="5" max="360" required>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label for="exam_date" class="form-label fw-semibold">Scheduled Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="exam_date" name="exam_date" value="{{ exam.exam_date.strftime('%Y-%m-%d') if exam else '' }}" required>
+                            <div class="invalid-feedback">Scheduled date is required.</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label for="assigned_examiner_id" class="form-label fw-semibold">Assigned Primary Examiner</label>
+                            <select class="form-select" id="assigned_examiner_id" name="assigned_examiner_id">
+                                <option value="">-- Open to any approved examiner --</option>
+                                {% for ex in examiners %}
+                                    <option value="{{ ex.id }}" {% if exam and exam.assigned_examiner_id == ex.id %}selected{% endif %}>
+                                        {{ ex.name }} ({{ ex.department }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text small">Admin can change examiner assignment at any time.</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label fw-semibold">Examination Instructions / Scope</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" placeholder="Provide syllabus guidelines, submission links, or assessment criteria...">{{ exam.description if exam else '' }}</textarea>
+                    </div>
+
+                    <!-- Window Control Toggles -->
+                    <div class="p-3 bg-light rounded-3 mb-4 border">
+                        <div class="fw-semibold text-dark mb-2"><i class="bi bi-toggles text-primary me-1"></i> Slot & Booking Phase Controls</div>
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="slot_creation_open" name="slot_creation_open" {% if not exam or exam.slot_creation_open %}checked{% endif %}>
+                                    <label class="form-check-label fw-semibold" for="slot_creation_open">Open Examiner Slot Creation</label>
+                                    <small class="text-muted d-block">When checked, approved examiners can create slots.</small>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="student_booking_open" name="student_booking_open" {% if not exam or exam.student_booking_open %}checked{% endif %}>
+                                    <label class="form-check-label fw-semibold" for="student_booking_open">Open Student Slot Booking</label>
+                                    <small class="text-muted d-block">When checked, enrolled students can book open slots.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('admin.examinations') }}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                            <i class="bi bi-check-circle me-1"></i> Save Examination
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

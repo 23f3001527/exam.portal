@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Courses - Examination Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-journal-bookmark text-primary me-2"></i>Course Management</h3>
+        <p class="text-muted mb-0">Manage university courses, departments, and curricular definitions</p>
+    </div>
+    <a href="{{ url_for('admin.create_course') }}" class="btn btn-primary btn-sm shadow-sm">
+        <i class="bi bi-plus-circle me-1"></i> Add New Course
+    </a>
+</div>
+
+<!-- Search Bar -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+    <div class="card-body p-3">
+        <form method="GET" action="{{ url_for('admin.courses') }}" class="row g-2 align-items-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" name="q" value="{{ search_query or '' }}" placeholder="Search by course code, name, department..." data-table-search="coursesTable">
+                </div>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-dark btn-sm px-3">Search</button>
+                {% if search_query %}
+                    <a href="{{ url_for('admin.courses') }}" class="btn btn-outline-secondary btn-sm ms-1">Reset</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Courses Table -->
+<div class="card border-0 shadow-sm rounded-4 bg-white">
+    <div class="card-body p-3">
+        <div class="table-responsive">
+            <table class="table table-hover table-custom mb-0" id="coursesTable">
+                <thead>
+                    <tr>
+                        <th>Course Code</th>
+                        <th>Course Name</th>
+                        <th>Department</th>
+                        <th>Credits</th>
+                        <th>Examinations</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if courses %}
+                        {% for c in courses %}
+                        <tr>
+                            <td><span class="badge bg-primary-subtle text-primary fw-bold fs-6">{{ c.code }}</span></td>
+                            <td>
+                                <div class="fw-semibold text-dark">{{ c.name }}</div>
+                                {% if c.description %}
+                                    <small class="text-muted text-truncate d-inline-block" style="max-width: 320px;">{{ c.description }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ c.department }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ c.credits }} Credits</span></td>
+                            <td>
+                                <span class="badge bg-info-subtle text-info">{{ c.examinations.count() }} Exams</span>
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('admin.edit_course', course_id=c.id) }}" class="btn btn-outline-secondary" title="Edit Course">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </a>
+                                    <form method="POST" action="{{ url_for('admin.delete_course', course_id=c.id) }}" class="d-inline confirm-action" data-confirm-message="Deleting course {{ c.code }} will also remove associated examinations and slots. Are you sure?">
+                                        <button type="submit" class="btn btn-outline-danger" title="Delete Course">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-5">
+                                <i class="bi bi-journal-x display-6 d-block mb-2"></i>
+                                No courses found. Click <strong>Add New Course</strong> to create one.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

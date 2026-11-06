@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}All Examination Slots - Examination Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-clock text-primary me-2"></i>All Examination Slots</h3>
+        <p class="text-muted mb-0">Monitor scheduled evaluation slots, view occupancy, and reassign examiners</p>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+    <div class="card-body p-3">
+        <form method="GET" action="{{ url_for('admin.slots') }}" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <select name="exam_id" class="form-select form-select-sm">
+                    <option value="">-- Filter by Examination (All) --</option>
+                    {% for ex in examinations %}
+                        <option value="{{ ex.id }}" {% if selected_exam_id == ex.id %}selected{% endif %}>
+                            {{ ex.course.code }}: {{ ex.title }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <select name="examiner_id" class="form-select form-select-sm">
+                    <option value="">-- Filter by Examiner (All) --</option>
+                    {% for em in examiners %}
+                        <option value="{{ em.id }}" {% if selected_examiner_id == em.id %}selected{% endif %}>
+                            {{ em.name }} ({{ em.department }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-dark btn-sm px-3">Filter</button>
+                {% if selected_exam_id or selected_examiner_id %}
+                    <a href="{{ url_for('admin.slots') }}" class="btn btn-outline-secondary btn-sm ms-1">Reset</a>
+                {% endif %}
+            </div>
+            <div class="col ms-auto text-end">
+                <input type="text" class="form-control form-control-sm d-inline-block w-auto" placeholder="Filter rows..." data-table-search="allSlotsTable">
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Slots Table -->
+<div class="card border-0 shadow-sm rounded-4 bg-white">
+    <div class="card-body p-3">
+        <div class="table-responsive">
+            <table class="table table-hover table-custom mb-0" id="allSlotsTable">
+                <thead>
+                    <tr>
+                        <th>Slot ID</th>
+                        <th>Examination & Course</th>
+                        <th>Date & Time</th>
+                        <th>Assigned Examiner</th>
+                        <th>Occupancy</th>
+                        <th>Status</th>
+                        <th>Venue / Link</th>
+                        <th class="text-end">Change Examiner</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if slots %}
+                        {% for s in slots %}
+                        <tr>
+                            <td><code>#{{ s.id }}</code></td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ s.examination.title }}</div>
+                                <small class="text-muted">{{ s.examination.course.code }} - {{ s.examination.course.name }}</small>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">{{ s.slot_date.strftime('%d-%b-%Y') }}</div>
+                                <small class="text-muted">{{ s.start_time.strftime('%I:%M %p') }} - {{ s.end_time.strftime('%I:%M %p') }}</small>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-primary"><i class="bi bi-person-badge me-1"></i>{{ s.examiner.name }}</div>
+                                <small class="text-muted">{{ s.examiner.department }}</small>
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 6px; width: 100px;">
+                                    {% set pct = (s.current_bookings / s.capacity * 100) if s.capacity > 0 else 0 %}
+                                    <div class="progress-bar {% if pct >= 100 %}bg-danger{% else %}bg-primary{% endif %}" role="progressbar" style="width: {{ pct }}%;"></div>
+                                </div>
+                                <small class="text-muted">{{ s.current_bookings }} / {{ s.capacity }} seats</small>
+                            </td>
+                            <td>
+                                {% if s.status == 'Open' %}
+                                    <span class="badge badge-soft-success">Open</span>
+                                {% elif s.status == 'Full' %}
+                                    <span class="badge badge-soft-danger">Full</span>
+                                {% else %}
+                                    <span class="badge badge-soft-secondary">{{ s.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ s.location_or_link or 'TBA' }}</small>
+                            </td>
+                            <td class="text-end">
+                                <!-- Core Feature: Change examiner assignment if required -->
+                                <button type="button" class="btn btn-outline-primary btn-sm py-1 px-2" data-bs-toggle="modal" data-bs-target="#changeExaminerModal{{ s.id }}">
+                                    <i class="bi bi-arrow-repeat me-1"></i> Reassign
+                                </button>
+
+                                <!-- Reassign Examiner Modal -->
+                                <div class="modal fade" id="changeExaminerModal{{ s.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered text-start">
+                                        <div class="modal-content border-0 shadow">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title fw-bold">Change Examiner Assignment</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form method="POST" action="{{ url_for('admin.change_slot_examiner', slot_id=s.id) }}">
+                                                <div class="modal-body">
+                                                    <p class="text-muted small">
+                                                        Reassign slot on <strong>{{ s.slot_date.strftime('%d-%b-%Y') }} ({{ s.start_time.strftime('%I:%M %p') }})</strong> for <em>{{ s.examination.title }}</em>.
+                                                    </p>
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Current Examiner</label>
+                                                        <input type="text" class="form-control" value="{{ s.examiner.name }} ({{ s.examiner.department }})" disabled>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="new_examiner_id{{ s.id }}" class="form-label fw-semibold">Select New Examiner <span class="text-danger">*</span></label>
+                                                        <select class="form-select" id="new_examiner_id{{ s.id }}" name="new_examiner_id" required>
+                                                            {% for em in examiners %}
+                                                                <option value="{{ em.id }}" {% if em.id == s.examiner_id %}selected{% endif %}>
+                                                                    {{ em.name }} ({{ em.department }}) - ID: {{ em.examiner_id }}
+                                                                </option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-primary fw-semibold">Confirm Reassignment</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <i class="bi bi-clock-history display-6 d-block mb-2"></i>
+                                No examination slots found.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

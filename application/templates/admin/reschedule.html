@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Reschedule Booking #{{ booking.id }} - Examination Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-md-9 col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4 bg-white">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                <div class="d-flex align-items-center">
+                    <a href="{{ url_for('admin.bookings') }}" class="btn btn-outline-secondary btn-sm me-3">
+                        <i class="bi bi-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h4 class="fw-bold mb-0 text-dark">Reschedule Examination Booking #{{ booking.id }}</h4>
+                        <small class="text-muted">Reallocate student to another available slot for this examination</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <!-- Current Booking Details -->
+                <div class="p-3 bg-light rounded-3 mb-4 border">
+                    <h6 class="fw-bold text-dark mb-2"><i class="bi bi-info-circle text-primary me-1"></i> Current Allocation</h6>
+                    <div class="row g-2 small">
+                        <div class="col-sm-6">
+                            <span class="text-muted">Candidate:</span>
+                            <strong class="d-block text-dark">{{ booking.student.name }} ({{ booking.student.student_id }})</strong>
+                        </div>
+                        <div class="col-sm-6">
+                            <span class="text-muted">Examination:</span>
+                            <strong class="d-block text-dark">{{ booking.examination.title }} ({{ booking.examination.course.code }})</strong>
+                        </div>
+                        <div class="col-sm-6">
+                            <span class="text-muted">Current Slot:</span>
+                            <strong class="d-block text-primary">{{ current_slot.slot_date.strftime('%d-%b-%Y') }} ({{ current_slot.start_time.strftime('%I:%M %p') }} - {{ current_slot.end_time.strftime('%I:%M %p') }})</strong>
+                        </div>
+                        <div class="col-sm-6">
+                            <span class="text-muted">Current Examiner:</span>
+                            <strong class="d-block text-dark">{{ current_slot.examiner.name }} ({{ current_slot.examiner.department }})</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reschedule Form -->
+                <form method="POST" action="{{ url_for('admin.reschedule_booking', booking_id=booking.id) }}">
+                    <div class="mb-4">
+                        <label for="new_slot_id" class="form-label fw-semibold">Select New Slot with Available Capacity <span class="text-danger">*</span></label>
+                        {% if available_slots %}
+                            <div class="list-group">
+                                {% for s in available_slots %}
+                                    <label class="list-group-item list-group-item-action d-flex align-items-center justify-content-between p-3 border rounded-3 mb-2">
+                                        <div class="d-flex align-items-center">
+                                            <input class="form-check-input me-3" type="radio" name="new_slot_id" value="{{ s.id }}" required>
+                                            <div>
+                                                <div class="fw-bold text-dark">{{ s.slot_date.strftime('%A, %d %B %Y') }}</div>
+                                                <div class="text-muted small">
+                                                    <i class="bi bi-clock me-1"></i> {{ s.start_time.strftime('%I:%M %p') }} - {{ s.end_time.strftime('%I:%M %p') }}
+                                                    &bull; <i class="bi bi-person me-1"></i> Examiner: {{ s.examiner.name }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge bg-success-subtle text-success">
+                                                {{ s.capacity - s.current_bookings }} seats remaining
+                                            </span>
+                                            <small class="d-block text-muted">{{ s.location_or_link or 'Online' }}</small>
+                                        </div>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning border-0">
+                                <i class="bi bi-exclamation-circle me-1"></i> No alternative slots with available capacity are currently scheduled for this examination. Please create a new slot or expand an existing slot's capacity first.
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('admin.bookings') }}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold" {% if not available_slots %}disabled{% endif %}>
+                            <i class="bi bi-arrow-repeat me-1"></i> Confirm Reschedule
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

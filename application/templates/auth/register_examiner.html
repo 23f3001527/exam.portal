@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Examiner Registration - Examination Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="card-header bg-dark text-white text-center py-3 border-0">
+                <i class="bi bi-person-badge display-6 text-warning mb-1"></i>
+                <h4 class="fw-bold mb-0">Examiner Self-Registration</h4>
+                <small class="text-white-50">Create an examiner profile to host slots and evaluate assessments</small>
+            </div>
+            <div class="card-body p-4 p-md-5 bg-white">
+                <div class="alert alert-warning py-2 px-3 small border-0 mb-4 bg-warning-subtle text-warning-emphasis">
+                    <i class="bi bi-info-circle-fill me-1"></i>
+                    <strong>Policy:</strong> Examiner registrations require approval by the Administrator before slot creation and student evaluation features are unlocked.
+                </div>
+
+                <form method="POST" action="{{ url_for('auth.register_examiner') }}" class="needs-validation" novalidate>
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label for="examiner_id" class="form-label fw-semibold">Examiner ID <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="examiner_id" name="examiner_id" placeholder="e.g. EXM-2024-01" required>
+                            <div class="invalid-feedback">Examiner ID is required.</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label for="name" class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" placeholder="e.g. Dr. Robert Davies" required>
+                            <div class="invalid-feedback">Full name is required.</div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label for="department" class="form-label fw-semibold">Academic Department <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="department" name="department" placeholder="e.g. Computer Science" required>
+                            <div class="invalid-feedback">Department is required.</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label for="contact" class="form-label fw-semibold">Phone / Office Location</label>
+                            <input type="text" class="form-control" id="contact" name="contact" placeholder="e.g. +91 9988776655, Room 402">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label fw-semibold">Institutional Email <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="examiner@faculty.edu" required>
+                            <div class="invalid-feedback">Institutional email is required.</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="username" class="form-label fw-semibold">Username <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control" id="username" name="username" placeholder="robertd" required>
+                            <div class="invalid-feedback">Username is required.</div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6">
+                            <label for="password" class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="password" name="password" minlength="6" placeholder="Min 6 characters" required>
+                            <div class="invalid-feedback">Password of at least 6 characters is required.</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label for="confirm_password" class="form-label fw-semibold">Confirm Password <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" minlength="6" placeholder="Re-enter password" required>
+                            <div class="invalid-feedback">Please confirm your password.</div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-dark w-100 py-2 fw-semibold shadow-sm">
+                        <i class="bi bi-send me-1"></i> Submit Examiner Registration
+                    </button>
+                </form>
+
+                <div class="text-center border-top mt-4 pt-3">
+                    <span class="text-muted small">Already registered? </span>
+                    <a href="{{ url_for('auth.login') }}" class="small fw-semibold text-primary">Log in here</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

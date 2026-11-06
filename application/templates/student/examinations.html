@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Search & Browse Examinations - Student Portal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-search text-primary me-2"></i>Examinations Catalog</h3>
+        <p class="text-muted mb-0">Search available course examinations and select convenient evaluation slots</p>
+    </div>
+</div>
+
+<!-- Search Bar -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+    <div class="card-body p-3">
+        <form method="GET" action="{{ url_for('student.examinations') }}" class="row g-2 align-items-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" name="q" value="{{ search_query or '' }}" placeholder="Search by course code, title, department..." data-table-search="studentExamsTable">
+                </div>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-dark btn-sm px-3">Search</button>
+                {% if search_query %}
+                    <a href="{{ url_for('student.examinations') }}" class="btn btn-outline-secondary btn-sm ms-1">Reset</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Examinations List Cards / Table -->
+<div class="card border-0 shadow-sm rounded-4 bg-white">
+    <div class="card-body p-3">
+        <div class="table-responsive">
+            <table class="table table-hover table-custom mb-0" id="studentExamsTable">
+                <thead>
+                    <tr>
+                        <th>Course Code</th>
+                        <th>Examination Title & Details</th>
+                        <th>Scheduled Date</th>
+                        <th>Duration & Total Marks</th>
+                        <th>Booking Phase</th>
+                        <th class="text-end">Slot Availability</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if examinations %}
+                        {% for ex in examinations %}
+                        <tr>
+                            <td><span class="badge bg-primary-subtle text-primary fw-bold fs-6">{{ ex.course.code }}</span></td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ ex.title }}</div>
+                                <div class="small text-muted">{{ ex.course.name }} &bull; Department: {{ ex.course.department }}</div>
+                                {% if ex.description %}
+                                    <small class="text-muted text-truncate d-inline-block mt-1" style="max-width: 380px;">{{ ex.description }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="fw-semibold">{{ ex.exam_date.strftime('%d-%b-%Y') }}</div>
+                                <small class="text-muted">{{ ex.exam_type }} Assessment</small>
+                            </td>
+                            <td>
+                                <div><span class="fw-semibold">{{ ex.duration_minutes }}</span> mins</div>
+                                <small class="text-muted">Total: {{ ex.total_marks }} Marks</small>
+                            </td>
+                            <td>
+                                {% if ex.student_booking_open %}
+                                    <span class="badge badge-soft-success"><i class="bi bi-unlock-fill me-1"></i>Open for Booking</span>
+                                {% else %}
+                                    <span class="badge badge-soft-secondary"><i class="bi bi-lock-fill me-1"></i>Booking Closed</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if ex.id in booked_exam_ids %}
+                                    <span class="badge bg-success-subtle text-success py-2 px-3 fw-semibold">
+                                        <i class="bi bi-check2-circle me-1"></i> Booked
+                                    </span>
+                                {% elif ex.student_booking_open %}
+                                    <a href="{{ url_for('student.exam_slots', exam_id=ex.id) }}" class="btn btn-primary btn-sm px-3 fw-semibold">
+                                        <i class="bi bi-clock me-1"></i> View Slots ({{ ex.slots.count() }})
+                                    </a>
+                                {% else %}
+                                    <button class="btn btn-outline-secondary btn-sm" disabled>Window Closed</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-5">
+                                <i class="bi bi-search display-6 d-block mb-2"></i>
+                                No examinations match your search.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

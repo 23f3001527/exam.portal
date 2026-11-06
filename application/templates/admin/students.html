@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Students - Examination Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-people text-primary me-2"></i>Student Records Directory</h3>
+        <p class="text-muted mb-0">Browse and search registered students and their examination participation</p>
+    </div>
+</div>
+
+<!-- Search Bar -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+    <div class="card-body p-3">
+        <form method="GET" action="{{ url_for('admin.students') }}" class="row g-2 align-items-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" name="q" value="{{ search_query or '' }}" placeholder="Search by name, student roll ID, department, email..." data-table-search="studentsTable">
+                </div>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-dark btn-sm px-3">Search</button>
+                {% if search_query %}
+                    <a href="{{ url_for('admin.students') }}" class="btn btn-outline-secondary btn-sm ms-1">Reset</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Students List Table -->
+<div class="card border-0 shadow-sm rounded-4 bg-white">
+    <div class="card-body p-3">
+        <div class="table-responsive">
+            <table class="table table-hover table-custom mb-0" id="studentsTable">
+                <thead>
+                    <tr>
+                        <th>Student Roll ID</th>
+                        <th>Student Name</th>
+                        <th>Email & Contact</th>
+                        <th>Department / Degree</th>
+                        <th>Bookings</th>
+                        <th>Registration Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if students %}
+                        {% for s in students %}
+                        <tr>
+                            <td><span class="fw-bold text-dark"><code>{{ s.student_id }}</code></span></td>
+                            <td>
+                                <div class="fw-semibold text-dark">{{ s.name }}</div>
+                                <small class="text-muted">Username: {{ s.user.username }}</small>
+                            </td>
+                            <td>
+                                <div><i class="bi bi-envelope me-1 text-muted"></i>{{ s.user.email }}</div>
+                                <small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ s.contact_details or 'N/A' }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">{{ s.department }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary-subtle text-primary">{{ s.bookings.count() }} Bookings</span>
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ s.created_at.strftime('%d-%b-%Y') if s.created_at else 'N/A' }}</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-5">
+                                <i class="bi bi-person-slash display-6 d-block mb-2"></i>
+                                No student records found.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

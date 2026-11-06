@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Examinations - Examination Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-file-earmark-text text-primary me-2"></i>Examinations Management</h3>
+        <p class="text-muted mb-0">Schedule viva assessments, manage rubrics, and toggle slot windows</p>
+    </div>
+    <a href="{{ url_for('admin.create_examination') }}" class="btn btn-primary btn-sm shadow-sm">
+        <i class="bi bi-plus-circle me-1"></i> Add New Examination
+    </a>
+</div>
+
+<!-- Search Bar -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+    <div class="card-body p-3">
+        <form method="GET" action="{{ url_for('admin.examinations') }}" class="row g-2 align-items-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" name="q" value="{{ search_query or '' }}" placeholder="Search by exam title or course..." data-table-search="examsTable">
+                </div>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-dark btn-sm px-3">Search</button>
+                {% if search_query %}
+                    <a href="{{ url_for('admin.examinations') }}" class="btn btn-outline-secondary btn-sm ms-1">Reset</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Examinations Table -->
+<div class="card border-0 shadow-sm rounded-4 bg-white">
+    <div class="card-body p-3">
+        <div class="table-responsive">
+            <table class="table table-hover table-custom mb-0" id="examsTable">
+                <thead>
+                    <tr>
+                        <th>Exam Title & Course</th>
+                        <th>Exam Date</th>
+                        <th>Total Marks</th>
+                        <th>Examiner Slot Creation</th>
+                        <th>Student Slot Booking</th>
+                        <th>Rubrics</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if examinations %}
+                        {% for ex in examinations %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">{{ ex.title }}</div>
+                                <div class="small text-muted">
+                                    <span class="badge bg-secondary-subtle text-secondary me-1">{{ ex.course.code }}</span>
+                                    {{ ex.course.name }}
+                                </div>
+                                <div class="small mt-1 text-primary">
+                                    <i class="bi bi-person me-1"></i>
+                                    {% if ex.assigned_examiner %}
+                                        Assigned: {{ ex.assigned_examiner.name }}
+                                    {% else %}
+                                        <span class="text-muted fst-italic">Open to all approved examiners</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">{{ ex.exam_date.strftime('%d-%b-%Y') }}</div>
+                                <small class="text-muted">{{ ex.duration_minutes }} mins ({{ ex.exam_type }})</small>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ ex.total_marks }} Marks</div>
+                                <small class="text-muted">{{ ex.slots.count() }} Slots | {{ ex.booked_count() }} Booked</small>
+                            </td>
+                            <td>
+                                <!-- Core Feature: Open and close examiner slot creation -->
+                                <form method="POST" action="{{ url_for('admin.toggle_slot_creation', exam_id=ex.id) }}" class="d-inline">
+                                    {% if ex.slot_creation_open %}
+                                        <button type="submit" class="btn btn-sm btn-outline-success py-1 px-2" title="Click to Close Slot Creation">
+                                            <i class="bi bi-unlock-fill me-1"></i> OPEN <span class="badge bg-success ms-1">Active</span>
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" title="Click to Open Slot Creation">
+                                            <i class="bi bi-lock-fill me-1"></i> CLOSED <span class="badge bg-danger ms-1">Locked</span>
+                                        </button>
+                                    {% endif %}
+                                </form>
+                            </td>
+                            <td>
+                                <!-- Core Feature: Open and close student slot booking -->
+                                <form method="POST" action="{{ url_for('admin.toggle_student_booking', exam_id=ex.id) }}" class="d-inline">
+                                    {% if ex.student_booking_open %}
+                                        <button type="submit" class="btn btn-sm btn-outline-primary py-1 px-2" title="Click to Close Student Booking">
+                                            <i class="bi bi-calendar-check-fill me-1"></i> OPEN <span class="badge bg-primary ms-1">Active</span>
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Click to Open Student Booking">
+                                            <i class="bi bi-calendar-x-fill me-1"></i> CLOSED <span class="badge bg-secondary ms-1">Locked</span>
+                                        </button>
+                                    {% endif %}
+                                </form>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin.examination_rubrics', exam_id=ex.id) }}" class="btn btn-sm btn-outline-info py-1 px-2">
+                                    <i class="bi bi-card-checklist me-1"></i> Rubrics ({{ ex.rubrics.count() }})
+                                </a>
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('admin.edit_examination', exam_id=ex.id) }}" class="btn btn-outline-secondary" title="Edit Exam">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form method="POST" action="{{ url_for('admin.delete_examination', exam_id=ex.id) }}" class="d-inline confirm-action" data-confirm-message="Deleting examination '{{ ex.title }}' will also delete all rubrics, slots, and bookings. Proceed?">
+                                        <button type="submit" class="btn btn-outline-danger" title="Delete Exam">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">
+                                <i class="bi bi-file-earmark-x display-6 d-block mb-2"></i>
+                                No examinations found. Click <strong>Add New Examination</strong> to schedule one.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

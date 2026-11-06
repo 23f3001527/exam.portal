@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Book Slot - {{ exam.title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-lg-9">
+        <div class="card border-0 shadow-sm rounded-4 bg-white">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div class="d-flex align-items-center">
+                        <a href="{{ url_for('student.examinations') }}" class="btn btn-outline-secondary btn-sm me-3">
+                            <i class="bi bi-arrow-left"></i>
+                        </a>
+                        <div>
+                            <h4 class="fw-bold mb-0 text-dark">Available Examination Slots</h4>
+                            <small class="text-muted">{{ exam.course.code }}: {{ exam.course.name }}</small>
+                        </div>
+                    </div>
+                    <span class="badge bg-primary fs-6 px-3 py-2">{{ exam.title }}</span>
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+                <!-- Exam details overview -->
+                <div class="p-3 bg-light rounded-3 mb-4 border">
+                    <div class="row g-2 small">
+                        <div class="col-sm-4">
+                            <span class="text-muted">Total Marks:</span>
+                            <strong class="d-block text-dark">{{ exam.total_marks }} Marks</strong>
+                        </div>
+                        <div class="col-sm-4">
+                            <span class="text-muted">Assessment Duration:</span>
+                            <strong class="d-block text-dark">{{ exam.duration_minutes }} Minutes</strong>
+                        </div>
+                        <div class="col-sm-4">
+                            <span class="text-muted">Official Exam Date:</span>
+                            <strong class="d-block text-dark">{{ exam.exam_date.strftime('%A, %d %B %Y') }}</strong>
+                        </div>
+                    </div>
+                    {% if exam.description %}
+                        <div class="mt-2 pt-2 border-top small text-muted">
+                            <strong>Instructions:</strong> {{ exam.description }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Duplicate Booking Warning (if student already booked) -->
+                {% if existing_booking %}
+                    <div class="alert alert-warning border-0 shadow-sm mb-4">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div>
+                                <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
+                                <strong>You already hold an active booking (ID #{{ existing_booking.id }}) for this examination!</strong>
+                                <div class="small mt-1">
+                                    Slot: {{ existing_booking.slot.slot_date.strftime('%d-%b-%Y') }} at {{ existing_booking.slot.start_time.strftime('%I:%M %p') }} with Examiner {{ existing_booking.slot.examiner.name }}.
+                                </div>
+                            </div>
+                            <a href="{{ url_for('student.booking_history') }}" class="btn btn-warning btn-sm fw-semibold">
+                                View in Booking History
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Slots List -->
+                <h5 class="fw-bold text-dark mb-3"><i class="bi bi-clock-history text-primary me-2"></i>Select an Available Slot</h5>
+
+                {% if slots %}
+                    <div class="row g-3">
+                        {% for s in slots %}
+                        {% set is_full = (s.current_bookings >= s.capacity) or (s.status == 'Full') or (s.status == 'Closed') %}
+                        <div class="col-md-6">
+                            <div class="card h-100 border rounded-3 p-3 {% if is_full %}bg-light opacity-75{% else %}bg-white shadow-sm{% endif %}">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-0">
+                                            <i class="bi bi-calendar-event text-primary me-1"></i>
+                                            {{ s.slot_date.strftime('%A, %d %b %Y') }}
+                                        </h6>
+                                        <div class="text-primary fw-semibold small mt-1">
+                                            <i class="bi bi-clock me-1"></i>
+                                            {{ s.start_time.strftime('%I:%M %p') }} - {{ s.end_time.strftime('%I:%M %p') }}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        {% if is_full %}
+                                            <span class="badge badge-soft-danger"><i class="bi bi-lock-fill me-1"></i>Slot Full</span>
+                                        {% else %}
+                                            <span class="badge badge-soft-success"><i class="bi bi-check-circle me-1"></i>Available</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="small text-muted mb-2">
+                                    <div><i class="bi bi-person-badge me-1"></i> Examiner: <strong>{{ s.examiner.name }}</strong> ({{ s.examiner.department }})</div>
+                                    <div><i class="bi bi-geo-alt me-1"></i> Location: {{ s.location_or_link or 'Online / TBA' }}</div>
+                                </div>
+
+                                <div class="mt-auto pt-2 border-top d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-muted d-block">Capacity</small>
+                                        <span class="fw-bold small {% if is_full %}text-danger{% else %}text-dark{% endif %}">
+                                            {{ s.current_bookings }} / {{ s.capacity }} seats booked
+                                        </span>
+                                    </div>
+
+                                    {% if not existing_booking and not is_full and exam.student_booking_open %}
+                                        <form method="POST" action="{{ url_for('student.book_slot', slot_id=s.id) }}" class="d-inline">
+                                            <button type="submit" class="btn btn-primary btn-sm px-3 fw-semibold shadow-sm">
+                                                <i class="bi bi-check2 me-1"></i> Book This Slot
+                                            </button>
+                                        </form>
+                                    {% elif existing_booking %}
+                                        <button class="btn btn-outline-secondary btn-sm" disabled>Already Booked</button>
+                                    {% elif is_full %}
+                                        <button class="btn btn-outline-danger btn-sm" disabled>Full Capacity</button>
+                                    {% else %}
+                                        <button class="btn btn-outline-secondary btn-sm" disabled>Booking Closed</button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-5 border rounded-3 bg-light">
+                        <i class="bi bi-clock-slash display-6 d-block mb-2"></i>
+                        No examination slots have been scheduled for this examination yet. Please check back later.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Log In - Examination Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="card-header bg-dark text-white text-center py-4 border-0">
+                <i class="bi bi-mortarboard-fill text-primary display-5 mb-2"></i>
+                <h4 class="fw-bold mb-0">Sign In to EMS</h4>
+                <small class="text-white-50">Admin, Examiner & Student Unified Access</small>
+            </div>
+            <div class="card-body p-4 p-md-5 bg-white">
+                <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label for="identifier" class="form-label fw-semibold">Username or Email</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control" id="identifier" name="identifier" value="{{ identifier or '' }}" required autofocus placeholder="Enter your username or email">
+                            <div class="invalid-feedback">Please enter your username or registered email.</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <label for="password" class="form-label fw-semibold">Password</label>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control" id="password" name="password" required placeholder="Enter password">
+                            <div class="invalid-feedback">Please enter your password.</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 form-check">
+                        <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                        <label class="form-check-label text-muted small" for="remember">Keep me logged in</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold shadow-sm mb-3">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+                    </button>
+                </form>
+
+                <!-- Pre-seeded Admin Credentials Banner (for quick evaluation) -->
+                <div class="alert alert-info py-2 px-3 small border-0 mb-4 bg-info-subtle text-info-emphasis">
+                    <div class="fw-bold mb-1"><i class="bi bi-info-circle me-1"></i> Pre-configured Admin Login:</div>
+                    <div>Username: <code>admin</code></div>
+                    <div>Password: <code>AdminPassword@123</code></div>
+                </div>
+
+                <div class="text-center border-top pt-3">
+                    <p class="text-muted small mb-2">New user? Register below:</p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="{{ url_for('auth.register_student') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-mortarboard me-1"></i> Student Sign Up
+                        </a>
+                        <a href="{{ url_for('auth.register_examiner') }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-person-badge me-1"></i> Examiner Sign Up
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

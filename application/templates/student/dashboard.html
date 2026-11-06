@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard - Examination Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-mortarboard text-primary me-2"></i>Student Portal</h2>
+        <p class="text-muted mb-0">Welcome, <strong>{{ profile.name }}</strong> (Roll: <code>{{ profile.student_id }}</code>) &bull; {{ profile.department }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('student.examinations') }}" class="btn btn-primary btn-sm shadow-sm">
+            <i class="bi bi-search me-1"></i> Browse & Book Examinations
+        </a>
+        <a href="{{ url_for('student.profile') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-person-gear me-1"></i> Edit Profile
+        </a>
+    </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card stat-card bg-white p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold">Available Exams</span>
+                    <h3 class="fw-bold mb-0 text-dark">{{ available_exams | length }}</h3>
+                </div>
+                <div class="stat-icon bg-primary-subtle text-primary">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+            </div>
+            <a href="{{ url_for('student.examinations') }}" class="small text-decoration-none mt-2 text-primary">Browse exams &rarr;</a>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+        <div class="card stat-card bg-white p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold">Upcoming Exams</span>
+                    <h3 class="fw-bold mb-0 text-dark">{{ upcoming_bookings | length }}</h3>
+                </div>
+                <div class="stat-icon bg-info-subtle text-info">
+                    <i class="bi bi-calendar-event"></i>
+                </div>
+            </div>
+            <a href="{{ url_for('student.schedule') }}" class="small text-decoration-none mt-2 text-info">View schedule &rarr;</a>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+        <div class="card stat-card bg-white p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold">Booked Slots</span>
+                    <h3 class="fw-bold mb-0 text-dark">{{ active_booked_slots | length }}</h3>
+                </div>
+                <div class="stat-icon bg-success-subtle text-success">
+                    <i class="bi bi-check2-circle"></i>
+                </div>
+            </div>
+            <a href="{{ url_for('student.booking_history') }}" class="small text-decoration-none mt-2 text-success">Booking history &rarr;</a>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+        <div class="card stat-card bg-white p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold">Published Results</span>
+                    <h3 class="fw-bold mb-0 text-dark">{{ published_results | length }}</h3>
+                </div>
+                <div class="stat-icon bg-purple-subtle text-secondary" style="background-color: #f3e8ff; color: #7e22ce;">
+                    <i class="bi bi-award"></i>
+                </div>
+            </div>
+            <span class="small text-muted mt-2 d-block">Scorecards ready</span>
+        </div>
+    </div>
+</div>
+
+<!-- Upcoming Booked Examinations Section -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+    <div class="card-header bg-transparent border-0 pt-3 px-4 pb-0 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-calendar-check text-primary me-2"></i>My Booked Examination Slots</h5>
+        <a href="{{ url_for('student.booking_history') }}" class="btn btn-outline-secondary btn-sm">Full History</a>
+    </div>
+    <div class="card-body p-3">
+        <div class="table-responsive">
+            <table class="table table-hover table-custom mb-0">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Examination & Course</th>
+                        <th>Slot Date & Time</th>
+                        <th>Examiner</th>
+                        <th>Venue / Link</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if active_booked_slots %}
+                        {% for b in active_booked_slots %}
+                        <tr>
+                            <td><span class="fw-bold">#{{ b.id }}</span></td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ b.examination.title }}</div>
+                                <small class="text-muted">{{ b.examination.course.code }} - {{ b.examination.course.name }}</small>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-primary">{{ b.slot.slot_date.strftime('%d-%b-%Y') }}</div>
+                                <small class="text-muted">{{ b.slot.start_time.strftime('%I:%M %p') }} - {{ b.slot.end_time.strftime('%I:%M %p') }}</small>
+                            </td>
+                            <td>
+                                <div class="small fw-semibold">{{ b.slot.examiner.name }}</div>
+                                <small class="text-muted">{{ b.slot.examiner.department }}</small>
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ b.slot.location_or_link or 'TBA / Online' }}</small>
+                            </td>
+                            <td>
+                                {% if b.status == 'Booked' %}
+                                    <span class="badge badge-soft-info">Confirmed</span>
+                                {% elif b.status == 'Rescheduled' %}
+                                    <span class="badge badge-soft-warning">Rescheduled</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <!-- Core Feature: Cancel booking before deadline -->
+                                <form method="POST" action="{{ url_for('student.cancel_booking', booking_id=b.id) }}" class="d-inline confirm-action" data-confirm-message="Are you sure you want to cancel this booking? Your slot will be released.">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm py-1 px-2">
+                                        <i class="bi bi-x-circle me-1"></i> Cancel
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                You currently have no active examination slot bookings. <a href="{{ url_for('student.examinations') }}">Browse available examinations</a> to book your slot.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Published Results & Scorecards Section -->
+{% if published_results %}
+<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white border-start border-success border-4">
+    <div class="card-header bg-transparent border-0 pt-3 px-4 pb-0">
+        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-award-fill text-success me-2"></i>Published Results & Downloadable Scorecards</h5>
+        <small class="text-muted">Review examiner remarks and download official scorecards</small>
+    </div>
+    <div class="card-body p-3">
+        <div class="table-responsive">
+            <table class="table table-hover table-custom mb-0">
+                <thead>
+                    <tr>
+                        <th>Examination</th>
+                        <th>Evaluated By</th>
+                        <th>Score Awarded</th>
+                        <th>Percentage & Grade</th>
+                        <th>Evaluation Remarks</th>
+                        <th class="text-end">Scorecard</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in published_results %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold text-dark">{{ b.examination.title }}</div>
+                            <small class="text-muted">{{ b.examination.course.code }}</small>
+                        </td>
+                        <td>
+                            <div class="small fw-semibold">{{ b.evaluator.name if b.evaluator else b.slot.examiner.name }}</div>
+                        </td>
+                        <td>
+                            <span class="fw-bold text-success fs-6">{{ b.marks_obtained }} / {{ b.examination.total_marks }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success-subtle text-success fs-6">{{ b.percentage }}%</span>
+                        </td>
+                        <td>
+                            <small class="text-muted text-truncate d-inline-block" style="max-width: 250px;">{{ b.evaluation_remarks or 'Satisfactory' }}</small>
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('student.view_scorecard', booking_id=b.id) }}" class="btn btn-outline-primary" title="View Scorecard Details">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                <!-- Core Feature: Downloadable examination scorecard -->
+                                <a href="{{ url_for('student.download_scorecard', booking_id=b.id) }}" class="btn btn-primary" title="Download Official PDF">
+                                    <i class="bi bi-file-earmark-pdf"></i> Download PDF
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Available Examinations Section -->
+<div class="card border-0 shadow-sm rounded-4 bg-white">
+    <div class="card-header bg-transparent border-0 pt-3 px-4 pb-0 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-bold text-dark mb-0"><i class="bi bi-search text-info me-2"></i>Available Examinations for Booking</h5>
+            <small class="text-muted">Examinations with open student booking windows</small>
+        </div>
+        <a href="{{ url_for('student.examinations') }}" class="btn btn-outline-primary btn-sm">Explore All</a>
+    </div>
+    <div class="card-body p-3">
+        <div class="table-responsive">
+            <table class="table table-hover table-custom mb-0">
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Examination Title</th>
+                        <th>Date & Duration</th>
+                        <th>Available Slots</th>
+                        <th>Status</th>
+                        <th class="text-end">Booking Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if available_exams %}
+                        {% for ex in available_exams %}
+                        <tr>
+                            <td><span class="badge bg-primary-subtle text-primary fw-semibold">{{ ex.course.code }}</span></td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ ex.title }}</div>
+                                <small class="text-muted">{{ ex.course.name }}</small>
+                            </td>
+                            <td>
+                                <div class="small fw-semibold">{{ ex.exam_date.strftime('%d-%b-%Y') }}</div>
+                                <small class="text-muted">{{ ex.duration_minutes }} Mins &bull; Total: {{ ex.total_marks }} Marks</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">{{ ex.slots.count() }} Slots Listed</span>
+                            </td>
+                            <td>
+                                {% if ex.id in booked_exam_ids %}
+                                    <span class="badge badge-soft-success"><i class="bi bi-check-circle-fill me-1"></i>Booked</span>
+                                {% else %}
+                                    <span class="badge badge-soft-primary"><i class="bi bi-unlock-fill me-1"></i>Booking Open</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if ex.id in booked_exam_ids %}
+                                    <a href="{{ url_for('student.booking_history') }}" class="btn btn-outline-secondary btn-sm py-1 px-3">
+                                        View Booking
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('student.exam_slots', exam_id=ex.id) }}" class="btn btn-primary btn-sm py-1 px-3 fw-semibold">
+                                        <i class="bi bi-calendar-plus me-1"></i> Book Slot
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">No examinations currently open for student booking.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

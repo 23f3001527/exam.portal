@@ -1,0 +1,116 @@
+/* Examination Management System Custom Styles (Bootstrap-only compatible) */
+
+:root {
+    --ems-primary: #1e3a8a;
+    --ems-secondary: #0ea5e9;
+    --ems-dark: #0f172a;
+    --ems-light: #f8fafc;
+    --ems-border: #e2e8f0;
+}
+
+body {
+    background-color: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #334155;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1 0 auto;
+}
+
+footer {
+    flex-shrink: 0;
+}
+
+/* Navbar */
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.brand-badge {
+    font-size: 0.65rem;
+    vertical-align: middle;
+    margin-left: 0.4rem;
+}
+
+/* Metric / Stat Cards */
+.stat-card {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+/* Custom Table Styling */
+.table-custom th {
+    background-color: #f1f5f9;
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-top: none;
+}
+
+.table-custom td {
+    vertical-align: middle;
+}
+
+/* Badges */
+.badge-soft-success {
+    background-color: #dcfce7;
+    color: #166534;
+}
+.badge-soft-warning {
+    background-color: #fef9c3;
+    color: #854d0e;
+}
+.badge-soft-danger {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+.badge-soft-info {
+    background-color: #e0f2fe;
+    color: #075985;
+}
+.badge-soft-secondary {
+    background-color: #f1f5f9;
+    color: #475569;
+}
+
+/* Scorecard Printable Styles */
+@media print {
+    .no-print, header, footer, .navbar, .btn {
+        display: none !important;
+    }
+    body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+    }
+    .scorecard-sheet {
+        border: 2px solid #000 !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 20px !important;
+    }
+}
+

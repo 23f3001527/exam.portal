@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Examination Scorecard - {{ booking.student.student_id }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-lg-9 col-xl-8">
+        <!-- Actions Toolbar -->
+        <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+            <a href="{{ url_for('student.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+            </a>
+            <div class="d-flex gap-2">
+                <button onclick="window.print()" class="btn btn-outline-dark btn-sm">
+                    <i class="bi bi-printer me-1"></i> Print Scorecard
+                </button>
+                <!-- Core Feature: Downloadable examination scorecard -->
+                <a href="{{ url_for('student.download_scorecard', booking_id=booking.id) }}" class="btn btn-primary btn-sm shadow-sm">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> Download Official PDF
+                </a>
+            </div>
+        </div>
+
+        <!-- Official Scorecard Sheet -->
+        <div class="card border-0 shadow-lg rounded-4 bg-white scorecard-sheet overflow-hidden">
+            <!-- Header Banner -->
+            <div class="p-4 text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <div class="text-uppercase small tracking-wide fw-bold opacity-75">Examination Management System</div>
+                        <h3 class="fw-bold mb-0">Official Candidate Scorecard</h3>
+                        <small class="opacity-75">Authentic Evaluation Report & Grade Summary</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-light text-dark px-3 py-2 fw-semibold">
+                            Booking #{{ booking.id }}
+                        </span>
+                        <div class="small opacity-75 mt-1">Status: Official Published</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                <!-- Candidate & Examination Overview -->
+                <div class="row g-3 p-3 bg-light rounded-3 mb-4 border">
+                    <div class="col-sm-6 border-end-sm">
+                        <h6 class="text-primary fw-bold mb-2"><i class="bi bi-person me-1"></i> Candidate Profile</h6>
+                        <table class="table table-sm table-borderless mb-0 small">
+                            <tr>
+                                <th class="text-muted" style="width: 35%;">Name:</th>
+                                <td class="fw-bold text-dark">{{ booking.student.name }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Student ID:</th>
+                                <td><code>{{ booking.student.student_id }}</code></td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Department:</th>
+                                <td>{{ booking.student.department }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Email:</th>
+                                <td>{{ booking.student.user.email }}</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <h6 class="text-primary fw-bold mb-2"><i class="bi bi-journal-check me-1"></i> Examination Profile</h6>
+                        <table class="table table-sm table-borderless mb-0 small">
+                            <tr>
+                                <th class="text-muted" style="width: 35%;">Course:</th>
+                                <td class="fw-bold text-dark">{{ booking.examination.course.name }} ({{ booking.examination.course.code }})</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Examination:</th>
+                                <td>{{ booking.examination.title }} ({{ booking.examination.exam_type }})</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Slot Date:</th>
+                                <td>{{ booking.slot.slot_date.strftime('%d-%b-%Y') }} ({{ booking.slot.start_time.strftime('%I:%M %p') }})</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Evaluator:</th>
+                                <td>
+                                    {{ booking.evaluator.name if booking.evaluator else booking.slot.examiner.name }} 
+                                    ({{ booking.slot.examiner.department }})
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Rubric-Based Breakdown Table -->
+                <h5 class="fw-bold text-dark mb-3"><i class="bi bi-card-checklist text-primary me-2"></i>Criteria Evaluation Breakdown</h5>
+                <div class="table-responsive mb-4">
+                    <table class="table table-bordered align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th style="width: 5%;">#</th>
+                                <th style="width: 40%;">Rubric Criterion</th>
+                                <th style="width: 15%;">Max Marks</th>
+                                <th style="width: 15%;">Marks Awarded</th>
+                                <th style="width: 25%;">Feedback</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set rubric_scores = booking.rubric_scores.all() %}
+                            {% if rubric_scores %}
+                                {% for rs in rubric_scores %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>
+                                        <div class="fw-bold text-dark">{{ rs.rubric.criterion_name }}</div>
+                                        {% if rs.rubric.description %}
+                                            <small class="text-muted">{{ rs.rubric.description }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ rs.rubric.max_marks }} pts</td>
+                                    <td class="fw-bold text-primary">{{ rs.score }} pts</td>
+                                    <td><small class="text-muted">{{ rs.remarks or '-' }}</small></td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-3">General Overall Evaluation</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr class="fw-bold fs-6">
+                                <td colspan="2" class="text-end">GRAND TOTAL:</td>
+                                <td>{{ booking.examination.total_marks }} Marks</td>
+                                <td class="text-success fs-5">{{ booking.marks_obtained }} Marks</td>
+                                <td>
+                                    <span class="badge bg-success fs-6">{{ booking.percentage }}%</span>
+                                    {% if booking.percentage >= 75 %}
+                                        <span class="badge bg-primary">Distinction</span>
+                                    {% elif booking.percentage >= 60 %}
+                                        <span class="badge bg-info text-dark">First Class</span>
+                                    {% elif booking.percentage >= 40 %}
+                                        <span class="badge bg-warning text-dark">Pass</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Needs Improvement</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Examiner Overall Remarks -->
+                <div class="p-3 bg-light rounded-3 mb-4 border">
+                    <h6 class="fw-bold text-dark mb-2"><i class="bi bi-chat-left-quote text-primary me-2"></i>Examiner Qualitative Remarks</h6>
+                    <p class="text-secondary mb-0 fst-italic">
+                        "{{ booking.evaluation_remarks or 'The candidate has successfully demonstrated competence in the assessed topics.' }}"
+                    </p>
+                </div>
+
+                <!-- Official Signature & Verification Stamp -->
+                <div class="row pt-4 mt-4 border-top text-center text-muted small">
+                    <div class="col-6">
+                        <div class="border-top border-dark w-75 mx-auto pt-2">
+                            <strong>{{ booking.evaluator.name if booking.evaluator else booking.slot.examiner.name }}</strong>
+                            <div>Evaluating Examiner Signature</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border-top border-dark w-75 mx-auto pt-2">
+                            <strong>Office of Controller of Examinations</strong>
+                            <div>Digitally Certified Examination Management System</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

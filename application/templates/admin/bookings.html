@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}All Bookings & Rescheduling - Examination Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-calendar-check text-primary me-2"></i>All Examination Bookings</h3>
+        <p class="text-muted mb-0">Track student reservations, view evaluation outcomes, and reschedule bookings when needed</p>
+    </div>
+</div>
+
+<!-- Filters & Search -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+    <div class="card-body p-3">
+        <div class="row g-3 align-items-center justify-content-between">
+            <div class="col-md-auto">
+                <ul class="nav nav-pills">
+                    <li class="nav-item">
+                        <a class="nav-link {% if status_filter == 'all' %}active{% endif %}" href="{{ url_for('admin.bookings', status='all', q=search_query) }}">All ({{ bookings | length }})</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if status_filter == 'Booked' %}active{% endif %}" href="{{ url_for('admin.bookings', status='Booked', q=search_query) }}">Booked</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if status_filter == 'Rescheduled' %}active{% endif %}" href="{{ url_for('admin.bookings', status='Rescheduled', q=search_query) }}">Rescheduled</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if status_filter == 'Completed' %}active{% endif %}" href="{{ url_for('admin.bookings', status='Completed', q=search_query) }}">Completed</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if status_filter == 'Cancelled' %}active{% endif %}" href="{{ url_for('admin.bookings', status='Cancelled', q=search_query) }}">Cancelled</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="col-md-5">
+                <form method="GET" action="{{ url_for('admin.bookings') }}" class="d-flex gap-2">
+                    <input type="hidden" name="status" value="{{ status_filter }}">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control border-start-0" name="q" value="{{ search_query or '' }}" placeholder="Search by student, roll no, exam..." data-table-search="bookingsTable">
+                    </div>
+                    <button type="submit" class="btn btn-dark btn-sm px-3">Search</button>
+                    {% if search_query %}
+                        <a href="{{ url_for('admin.bookings', status=status_filter) }}" class="btn btn-outline-secondary btn-sm">Reset</a>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bookings Table -->
+<div class="card border-0 shadow-sm rounded-4 bg-white">
+    <div class="card-body p-3">
+        <div class="table-responsive">
+            <table class="table table-hover table-custom mb-0" id="bookingsTable">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Student</th>
+                        <th>Examination</th>
+                        <th>Slot Date & Time</th>
+                        <th>Examiner</th>
+                        <th>Status</th>
+                        <th>Score & Result</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if bookings %}
+                        {% for b in bookings %}
+                        <tr>
+                            <td><span class="fw-bold">#{{ b.id }}</span></td>
+                            <td>
+                                <div class="fw-semibold text-dark">{{ b.student.name }}</div>
+                                <small class="text-muted">{{ b.student.student_id }}</small>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">{{ b.examination.title }}</div>
+                                <small class="text-muted">{{ b.examination.course.code }}</small>
+                            </td>
+                            <td>
+                                <div>{{ b.slot.slot_date.strftime('%d-%b-%Y') }}</div>
+                                <small class="text-muted">{{ b.slot.start_time.strftime('%I:%M %p') }} - {{ b.slot.end_time.strftime('%I:%M %p') }}</small>
+                            </td>
+                            <td>
+                                <div>{{ b.slot.examiner.name }}</div>
+                                <small class="text-muted">{{ b.slot.examiner.department }}</small>
+                            </td>
+                            <td>
+                                {% if b.status == 'Completed' %}
+                                    <span class="badge badge-soft-success">Completed</span>
+                                {% elif b.status == 'Booked' %}
+                                    <span class="badge badge-soft-info">Booked</span>
+                                {% elif b.status == 'Rescheduled' %}
+                                    <span class="badge badge-soft-warning">Rescheduled</span>
+                                {% else %}
+                                    <span class="badge badge-soft-danger">Cancelled</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if b.result_published and b.marks_obtained is not none %}
+                                    <div class="fw-bold text-success">{{ b.marks_obtained }} / {{ b.examination.total_marks }}</div>
+                                    <small class="text-muted">({{ b.percentage }}%)</small>
+                                {% elif b.status == 'Cancelled' %}
+                                    <small class="text-muted">Cancelled</small>
+                                {% else %}
+                                    <span class="badge bg-light text-muted border">Pending Eval</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    {% if b.status in ['Booked', 'Rescheduled'] %}
+                                        <!-- Core Feature: Allow Admin to reschedule bookings when necessary -->
+                                        <a href="{{ url_for('admin.reschedule_booking', booking_id=b.id) }}" class="btn btn-outline-primary" title="Reschedule Booking">
+                                            <i class="bi bi-arrow-repeat me-1"></i> Reschedule
+                                        </a>
+                                    {% endif %}
+                                    {% if b.result_published %}
+                                        <a href="{{ url_for('student.view_scorecard', booking_id=b.id) }}" class="btn btn-outline-success" target="_blank" title="View Scorecard">
+                                            <i class="bi bi-file-earmark-check"></i>
+                                        </a>
+                                        <a href="{{ url_for('student.download_scorecard', booking_id=b.id) }}" class="btn btn-outline-secondary" title="Download PDF">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <i class="bi bi-calendar-x display-6 d-block mb-2"></i>
+                                No examination bookings recorded matching the filter.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

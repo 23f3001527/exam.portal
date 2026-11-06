@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Examiners & Approvals - Examination Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-person-badge text-primary me-2"></i>Examiners & Registration Approvals</h3>
+        <p class="text-muted mb-0">Review pending examiner self-registrations and manage faculty accounts</p>
+    </div>
+    {% if pending_count > 0 %}
+        <span class="badge bg-warning text-dark px-3 py-2 fs-6">
+            <i class="bi bi-bell-fill me-1"></i> {{ pending_count }} Pending Approvals
+        </span>
+    {% endif %}
+</div>
+
+<!-- Filter Tabs & Search -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+    <div class="card-body p-3">
+        <div class="row g-3 align-items-center justify-content-between">
+            <div class="col-md-auto">
+                <ul class="nav nav-pills">
+                    <li class="nav-item">
+                        <a class="nav-link {% if status_filter == 'all' %}active{% endif %}" href="{{ url_for('admin.examiners', status='all', q=search_query) }}">All Examiners</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if status_filter == 'Pending' %}active{% endif %} position-relative" href="{{ url_for('admin.examiners', status='Pending', q=search_query) }}">
+                            Pending
+                            {% if pending_count > 0 %}
+                                <span class="badge rounded-pill bg-danger ms-1">{{ pending_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if status_filter == 'Approved' %}active{% endif %}" href="{{ url_for('admin.examiners', status='Approved', q=search_query) }}">Approved</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if status_filter == 'Rejected' %}active{% endif %}" href="{{ url_for('admin.examiners', status='Rejected', q=search_query) }}">Rejected</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="col-md-5">
+                <form method="GET" action="{{ url_for('admin.examiners') }}" class="d-flex gap-2">
+                    <input type="hidden" name="status" value="{{ status_filter }}">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control border-start-0" name="q" value="{{ search_query or '' }}" placeholder="Search by name, ID, department..." data-table-search="examinersTable">
+                    </div>
+                    <button type="submit" class="btn btn-dark btn-sm px-3">Search</button>
+                    {% if search_query %}
+                        <a href="{{ url_for('admin.examiners', status=status_filter) }}" class="btn btn-outline-secondary btn-sm">Reset</a>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Examiners List Table -->
+<div class="card border-0 shadow-sm rounded-4 bg-white">
+    <div class="card-body p-3">
+        <div class="table-responsive">
+            <table class="table table-hover table-custom mb-0" id="examinersTable">
+                <thead>
+                    <tr>
+                        <th>Examiner ID</th>
+                        <th>Name & User Credentials</th>
+                        <th>Department</th>
+                        <th>Contact</th>
+                        <th>Status</th>
+                        <th>Created Slots</th>
+                        <th class="text-end">Approval Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if examiners %}
+                        {% for ex in examiners %}
+                        <tr>
+                            <td><span class="fw-bold text-dark"><code>{{ ex.examiner_id }}</code></span></td>
+                            <td>
+                                <div class="fw-semibold text-dark">{{ ex.name }}</div>
+                                <small class="text-muted"><i class="bi bi-envelope me-1"></i>{{ ex.user.email }} (user: {{ ex.user.username }})</small>
+                            </td>
+                            <td>{{ ex.department }}</td>
+                            <td><small class="text-muted">{{ ex.contact_details or 'N/A' }}</small></td>
+                            <td>
+                                {% if ex.status == 'Approved' %}
+                                    <span class="badge badge-soft-success"><i class="bi bi-check-circle-fill me-1"></i>Approved</span>
+                                {% elif ex.status == 'Pending' %}
+                                    <span class="badge badge-soft-warning"><i class="bi bi-clock-fill me-1"></i>Pending</span>
+                                {% else %}
+                                    <span class="badge badge-soft-danger"><i class="bi bi-x-circle-fill me-1"></i>Rejected</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">{{ ex.created_slots.count() }} Slots</span>
+                            </td>
+                            <td class="text-end">
+                                {% if ex.status == 'Pending' %}
+                                    <div class="btn-group btn-group-sm">
+                                        <form method="POST" action="{{ url_for('admin.approve_examiner', examiner_id=ex.id) }}" class="d-inline">
+                                            <button type="submit" class="btn btn-success btn-sm px-3 fw-semibold shadow-sm">
+                                                <i class="bi bi-check-lg me-1"></i> Approve
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('admin.reject_examiner', examiner_id=ex.id) }}" class="d-inline ms-1">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                <i class="bi bi-x-lg"></i> Reject
+                                            </button>
+                                        </form>
+                                    </div>
+                                {% elif ex.status == 'Approved' %}
+                                    <form method="POST" action="{{ url_for('admin.reject_examiner', examiner_id=ex.id) }}" class="d-inline confirm-action" data-confirm-message="Revoke approval for {{ ex.name }}?">
+                                        <button type="submit" class="btn btn-outline-warning btn-sm" title="Revoke Approval">
+                                            <i class="bi bi-slash-circle me-1"></i> Revoke
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <form method="POST" action="{{ url_for('admin.approve_examiner', examiner_id=ex.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-outline-success btn-sm">
+                                            <i class="bi bi-arrow-clockwise me-1"></i> Re-Approve
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">
+                                <i class="bi bi-person-slash display-6 d-block mb-2"></i>
+                                No examiners matching the current criteria.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
